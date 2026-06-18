@@ -77,4 +77,4 @@ python compare_heldout.py --tags heldout_none,heldout_improved
 
 ## Limitations
 
-Small scale (25 analysis cells, all single-frame scalars — no trajectories yet); oracle tolerances are hand-set; scoring is currently lenient (picks the closest float in the answer); results are reported for one model (cross-model baselines in progress). See `docs/vmd_ai_benchmark_report.html` for the full write-up and `docs/vmdbench_workshop.pdf` for the paper draft.
+Small scale (25 analysis cells, all single-frame scalars — no trajectories yet); oracle tolerances are hand-set; scoring is currently lenient (picks the closest float in the answer); results are reported for one model (cross-model baselines in progress).
