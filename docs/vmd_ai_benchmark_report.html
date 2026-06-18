@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VMD-AI — Correctness-Verified Benchmarking Report</title>
+<style>
+  :root{
+    --ink:#1a2230; --muted:#5b6776; --line:#e4e8ef; --bg:#f6f8fb; --card:#fff;
+    --accent:#2563b6; --accent-soft:#eaf1fb;
+    --good:#1f9d6b; --good-soft:#e6f6ef; --bad:#d1495b; --bad-soft:#fbecee;
+    --warn:#b8860b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:880px;margin:0 auto;padding:48px 28px 80px;}
+  header.title{border-bottom:3px solid var(--accent);padding-bottom:22px;margin-bottom:30px;}
+  .kicker{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:0 0 8px;}
+  h1{font-size:2.05rem;line-height:1.18;margin:.1em 0 .35em;letter-spacing:-.01em;}
+  .sub{font-size:1.12rem;color:var(--muted);margin:0;}
+  .meta{margin-top:16px;font-size:.86rem;color:var(--muted);}
+  .meta b{color:var(--ink);font-weight:600;}
+  h2{font-size:1.34rem;margin:46px 0 14px;padding-top:8px;letter-spacing:-.01em;}
+  h3{font-size:1.04rem;margin:26px 0 8px;}
+  p{margin:.6em 0;}
+  small,.note{color:var(--muted);font-size:.86rem;}
+  code{font:13.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:#eef1f6;padding:.08em .38em;border-radius:5px;}
+  .summary{background:var(--accent-soft);border:1px solid #d3e2f7;border-radius:14px;padding:22px 26px;margin:8px 0 6px;}
+  .summary h2{margin:0 0 10px;font-size:1.1rem;color:var(--accent);padding:0;}
+  .summary ol{margin:0;padding-left:1.15em;}
+  .summary li{margin:.5em 0;}
+  .stats{display:flex;flex-wrap:wrap;gap:14px;margin:26px 0 8px;}
+  .stat{flex:1 1 150px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
+  .stat .n{font-size:1.7rem;font-weight:700;letter-spacing:-.02em;}
+  .stat .l{font-size:.8rem;color:var(--muted);margin-top:2px;}
+  .stat.good .n{color:var(--good)} .stat.bad .n{color:var(--bad)} .stat.accent .n{color:var(--accent)}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.92rem;}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);}
+  th{font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:700;}
+  td.num{font-variant-numeric:tabular-nums;text-align:right;}
+  tr:last-child td{border-bottom:none;}
+  .pass{color:var(--good);font-weight:600;} .fail{color:var(--bad);font-weight:600;}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;padding:.15em .55em;border-radius:20px;}
+  .tag.up{background:var(--good-soft);color:var(--good);} .tag.down{background:var(--bad-soft);color:var(--bad);}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 24px;margin:18px 0;}
+  .card.good{border-left:4px solid var(--good);} .card.bad{border-left:4px solid var(--bad);}
+  .card.accent{border-left:4px solid var(--accent);}
+  .card h3{margin-top:0;}
+  .bars{margin:18px 0 6px;}
+  .bar-row{display:flex;align-items:center;gap:12px;margin:9px 0;}
+  .bar-label{width:54px;font-size:.86rem;font-weight:600;text-align:right;color:var(--muted);}
+  .bar-track{flex:1;background:#eef1f6;border-radius:7px;height:26px;position:relative;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:7px;display:flex;align-items:center;justify-content:flex-end;
+    padding-right:9px;color:#fff;font-size:.8rem;font-weight:700;}
+  .callout{background:#fff8e8;border:1px solid #f0e0b6;border-radius:12px;padding:14px 20px;margin:18px 0;font-size:.93rem;}
+  .callout b{color:var(--warn);}
+  footer{margin-top:54px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:.82rem;}
+  ul.tight{margin:.4em 0;padding-left:1.2em;} ul.tight li{margin:.32em 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="title">
+  <p class="kicker">VMD-AI · Research Progress Report</p>
+  <h1>Completion is not correctness: verifying an LLM agent that drives molecular visualization</h1>
+  <p class="sub">A self-hosted local model, an oracle-backed correctness scorer, and a 2×2 RAG × Wiki ablation on VMD analysis tasks.</p>
+  <p class="meta"><b>Author:</b> Peter &nbsp;·&nbsp; <b>System:</b> vmd_ai (ChatVMD) agent &nbsp;·&nbsp; <b>Date:</b> June 12, 2026 &nbsp;·&nbsp; <b>Structure:</b> 1CRN (crambin, 46 res / 327 atoms)</p>
+</header>
+
+<div class="summary">
+  <h2>Executive summary</h2>
+  <ol>
+    <li><b>Completion ≠ correctness.</b> An outcome-style benchmark (SciVisAgentBench) scores the agent ~100% by checking that an answer was <em>reported</em>; oracle verification shows a large share of those analysis answers are <em>physically wrong</em>.</li>
+    <li><b>Correctness does not track model tier.</b> A free local Qwen-72B computed the radius of gyration exactly (9.666 Å) where a frontier model earlier returned 329 Å; on contact-counting the order reverses. The text rubric passes both.</li>
+    <li><b>Zero-cost evaluation works.</b> Qwen2.5-72B (4-bit) self-hosted on a single A100 runs the full benchmark with no per-token cost, ~9 s/case once GPU contention is removed.</li>
+    <li><b>Retrieval doesn't help — but injected knowledge does.</b> The agent never calls the <code>docs_search</code> tool, even when explicitly ordered to, so RAG ≈ baseline. Placing the same reference directly in context lifts correctness <b>3.6 → 4.4 / 5</b> and cuts its variance threefold. The lesson is to <em>enforce</em> knowledge, not offer it.</li>
+    <li><b>And it generalizes.</b> Across five proteins (327–9,058 atoms), injected knowledge raises correctness <b>42 → 55 / 75</b>, with the gain concentrated on the syntax-hard measures (CA–CA distance, SASA) — the same pattern seen on 1CRN.</li>
+    <li><b>The gap is on both halves.</b> Visualization is checked the same way (scene-state assertions, not pixels): the baseline agent wrote "yes, licorice" while building <em>zero representations</em> — a false "yes" the rubric passes and scene-state catches. So the agent will claim a picture it never drew, not just a number it never computed.</li>
+  </ol>
+</div>
+
+<div class="stats">
+  <div class="stat accent"><div class="n">$0</div><div class="l">API cost per benchmark run (self-hosted)</div></div>
+  <div class="stat good"><div class="n">9.666 Å</div><div class="l">Qwen radius of gyration (gold 9.666)</div></div>
+  <div class="stat bad"><div class="n">329 Å</div><div class="l">Earlier frontier-model Rg (34× wrong)</div></div>
+  <div class="stat accent"><div class="n">0</div><div class="l">docs_search calls — the agent never retrieves, even when ordered</div></div>
+</div>
+
+<h2>1 · Background</h2>
+<p>
+  <b>vmd_ai</b> is an LLM agent that controls <a href="https://www.ks.uiuc.edu/Research/vmd/">VMD</a> (Visual Molecular Dynamics)
+  through an agentic tool-calling loop: the model issues Tcl via a <code>run_vmd_command</code> tool, inspects the scene, and
+  saves images and answers. The open question for the project was how to <em>evaluate</em> such an agent. Existing agent
+  benchmarks score <em>task completion</em> — typically via an LLM judge that checks whether a plausible answer was produced.
+  This report argues that for scientific tasks, completion is the wrong target, and demonstrates an oracle-backed
+  alternative that measures whether the agent's numbers are actually <em>right</em>.
+</p>
+
+<h2>2 · Setup</h2>
+<ul class="tight">
+  <li><b>Agent:</b> vmd_ai / ChatVMD tool loop, run unmodified, driving a headless native VMD 1.9.4 through a pseudo-terminal bridge.</li>
+  <li><b>Model:</b> <code>Qwen/Qwen2.5-72B-Instruct-AWQ</code> (4-bit), self-hosted with vLLM on one NVIDIA A100-80GB; OpenAI-compatible API, Hermes tool-call parser. No API cost.</li>
+  <li><b>Tasks:</b> the <code>molecular_vis</code> suite from SciVisAgentBench (10 cases on 1CRN): six visualization cases (cases 1–6) and four quantitative analysis cases (RMSD/RMSF, radius of gyration, distance + dihedrals, contacts).</li>
+  <li><b>Ground truth:</b> a VMD oracle (<code>gold_oracle.tcl</code>) recomputes the true values every run — never hand-typed.</li>
+</ul>
+<p class="note">Oracle gold for 1CRN: R<sub>g</sub> = 9.6663 Å · RMSD(self) = 0 · CA(1)–CA(10) = 12.603 Å · φ/ψ(res 5) = −76.18° / −18.98° · contacts(≤8 Å, all-atom) = 10 835.</p>
+
+<h2>3 · Finding 1 — completion is not correctness</h2>
+<p>
+  The benchmark's <code>molecular_vis</code> text rubric asks, in effect, “did the output report a numeric value for the
+  calculated quantity?” — so a wrong number scores full marks. Two demonstrations from this study:
+</p>
+<table>
+  <thead><tr><th>Case</th><th>Agent answer</th><th>Oracle gold</th><th>Correct?</th><th>Completion rubric</th></tr></thead>
+  <tbody>
+    <tr><td>Radius of gyration</td><td class="num">9.666 Å</td><td class="num">9.666 Å</td><td><span class="pass">PASS</span></td><td>pass</td></tr>
+    <tr><td>Contacts ≤ 8 Å</td><td class="num">2</td><td class="num">10 835</td><td><span class="fail">FAIL (≈5000×)</span></td><td>pass</td></tr>
+    <tr><td>Cases 1–6 (visualize)</td><td>writes “yes”</td><td>—</td><td>unverifiable from text</td><td>pass</td></tr>
+  </tbody>
+</table>
+<p>
+  Every one of these passes a completion check. Only an oracle separates the exact Rg from the contact count that is wrong
+  by three orders of magnitude. This is the core argument for programmatic verification (the approach in the companion
+  <code>vmdbench</code>) over outcome LLM-judging.
+</p>
+
+<h2>4 · Finding 2 — correctness does not track model tier</h2>
+<p>
+  Running the same analysis cases across models, scored against the same oracle, shows that being a “frontier” model does
+  not guarantee a correct result — and that the failures are <em>per-task</em> and not predictable from reputation.
+</p>
+<table>
+  <thead><tr><th>Metric (1CRN)</th><th>Gold</th><th>Claude (sonnet-4-5)</th><th>Qwen2.5-72B-AWQ (local)</th></tr></thead>
+  <tbody>
+    <tr><td>Radius of gyration</td><td class="num">9.67 Å</td><td><span class="fail">329 Å ✗</span> (34× high)</td><td><span class="pass">9.666 Å ✓</span> (exact)</td></tr>
+    <tr><td>RMSD (1 frame)</td><td class="num">0</td><td><span class="pass">0 ✓</span></td><td><span class="pass">0 ✓</span></td></tr>
+    <tr><td>Contacts ≤ 8 Å</td><td class="num">10 835</td><td><span class="pass">11 172 ✓≈</span></td><td><span class="fail">2 ✗</span></td></tr>
+  </tbody>
+</table>
+<p>
+  The local model is <em>more</em> correct than the frontier model on radius of gyration and <em>less</em> correct on
+  contacts. The completion rubric would rank them identically.
+</p>
+<div class="callout">
+  <b>Provenance caveat.</b> The Claude figures are from an earlier run recorded during this project, not the same-day
+  harness; a clean Claude baseline through the current correctness scorer is the one open confirmation for this table.
+</div>
+
+<h2>5 · Finding 3 — retrieval doesn't help this agent; injected knowledge does</h2>
+<p>
+  A 2×2 factorial — <b>{document RAG} × {persistent Wiki}</b> — was scored for correctness against the oracle. An early
+  3-seed pass suggested RAG added <b>+1.7 / 5</b>; <b>five-seed re-runs overturned that</b> — the gain was an
+  under-powered artifact — and prompted a three-arm retrieval study that produced a sharper, more useful result.
+</p>
+
+<div class="callout">
+  <b>Corrected by more seeds.</b> At 3 seeds RAG looked like 2.0 → 3.7 / 5. At 5 seeds the RAG arm sits at or below
+  baseline (e.g. none 2.8 ±1.2 vs rag 2.2 ±0.4). A cautionary note on small-sample agent benchmarks: the headline
+  reversed when the seed count doubled.
+</div>
+
+<p>So <em>why</em> doesn't retrieval help? Four arms, each against the same baseline, isolate it — and the deciding variable is <b>when</b> the knowledge arrives:</p>
+
+<table>
+  <thead><tr><th>RAG arm</th><th>knowledge delivery</th><th class="num">case_9</th><th class="num">correctness /5</th></tr></thead>
+  <tbody>
+    <tr><td><code>rag</code></td><td>optional tool — model may call <code>docs_search</code></td><td class="num">✗</td><td class="num">≈ none</td></tr>
+    <tr><td><code>ragforce</code></td><td>tool + prompt <em>orders</em> "retrieve first"</td><td class="num">✗</td><td class="num">≈ none</td></tr>
+    <tr><td><code>autorag</code></td><td>retrieved <em>after</em> an error (reactive)</td><td class="num">✗</td><td class="num">3.0 ±1.3</td></tr>
+    <tr><td><code>smartinject</code></td><td>proactive, but only the retrieved <em>subset</em></td><td class="num">✗</td><td class="num">2.4 ±1.4</td></tr>
+    <tr><td><b><code>inject</code></b></td><td>proactive — the <em>whole</em> curated cheatsheet</td><td class="num">✓ 5/5</td><td class="num"><b>4.4 ±0.5</b></td></tr>
+  </tbody>
+</table>
+<p class="note">Two factors decide it. <b>Timing</b>: proactive <code>inject</code> beats reactive <code>autorag</code> beats the never-invoked tools. <b>Completeness</b>: <code>smartinject</code> retrieves only the top-2 sections, dropping idioms a multi-step task also needs (the φ/ψ recipe, <code>file mkdir</code>) — so injecting the <em>whole</em> small cheatsheet wins. Subset-retrieval only pays off on a large corpus; a curated cheatsheet should be injected entire.</p>
+
+<p>
+  The index retrieves <em>perfectly</em> — a query for "measure dihedral" returns the exact syntax chunk at the top
+  (BM25 score 13.2) — so the failure is neither retrieval quality nor the model's ability to use docs. The agent simply
+  <b>never invokes</b> the tool: not on its own, and not when explicitly instructed. But when the same reference is
+  <em>forced</em> into context, correctness climbs and its variance collapses, fixing the hard cases the tool-based arms
+  could not:
+</p>
+
+<table>
+  <thead><tr><th>Metric (5 seeds)</th><th class="num">none</th><th class="num">inject</th></tr></thead>
+  <tbody>
+    <tr><td><b>Correctness /5</b></td><td class="num">3.6 ±1.5</td><td class="num"><b>4.4 ±0.5</b></td></tr>
+    <tr><td>case8 · R<sub>g</sub></td><td class="num">3/5</td><td class="num">5/5</td></tr>
+    <tr><td>case9 · distance</td><td class="num">4/5</td><td class="num">5/5</td></tr>
+    <tr><td>case9 · φ / ψ</td><td class="num">3/5</td><td class="num">5/5</td></tr>
+    <tr><td>case7 · RMSD</td><td class="num">5/5</td><td class="num">2/5</td></tr>
+  </tbody>
+</table>
+<p class="note">Injection also slightly perturbs an easy case (RMSD 5/5 → 2/5) — a reference can mislead as well as help. Pass-rate over 5 seeds.</p>
+
+<div class="card good">
+  <h3>The lesson: enforce knowledge, don't offer it <span class="tag up">inject 3.6 → 4.4</span></h3>
+  <p>
+    For a weaker local model an <em>optional</em> retrieval tool is dead weight — it won't call it even when ordered to.
+    What matters is <b>timing</b>: the <em>same</em> reference fixes case_9 when injected <em>before</em> the model acts
+    (proactive, 4.4/5), but not when surfaced <em>after</em> it errors (reactive <code>autorag</code>, 3.0/5) — by then
+    it is mid-failure and this model doesn't recover. And for a small curated corpus, <b>completeness</b> beats
+    precision — retrieving only the relevant subset (<code>smartinject</code>, 2.4/5) drops idioms a multi-step task
+    also needs, so the whole cheatsheet wins. This mirrors <b>DocPrompting</b> (ICLR 2023), which conditions
+    generation on retrieved docs up front rather than leaving the choice to the model. The fix is proactive injection
+    of the full curated reference (or fine-tuning), not a retrieval tool or a cleverer index.
+  </p>
+</div>
+
+<div class="card bad">
+  <h3>The Wiki hurts — from a cold start <span class="tag down">−1.0 / 5 (3 seeds)</span></h3>
+  <p>
+    The self-maintained Wiki was the <em>most reliable-looking</em> arm (10/10 completed) yet the <em>least correct</em>
+    (1.0 / 5), even breaking cases the model otherwise nails — its ~3× tool-call overhead crowds out the task. But the
+    ablation <b>reset the Wiki to empty every run</b>, so this measures cold-start cost, not the cross-session
+    accumulation it is designed for. The warm-Wiki case remains untested.
+  </p>
+</div>
+
+<h2>6 · Generalization — the win holds beyond 1CRN</h2>
+<p>
+  To check the findings aren't a single-structure artifact, the five portable metrics (Rg,
+  atom/residue counts, first↔last CA distance, SASA) were run over <b>five proteins</b> spanning
+  327–9,058 protein atoms (1CRN, 1UBQ, 1HSG, 1HCK, 1QMZ), 3 seeds per task, none vs inject, scored
+  against a structure-parametric oracle.
+</p>
+
+<table>
+  <thead><tr><th>metric (×5 structures, 3 seeds)</th><th class="num">none</th><th class="num">inject</th><th class="num">Δ</th></tr></thead>
+  <tbody>
+    <tr><td>radius of gyration</td><td class="num">11/15</td><td class="num">10/15</td><td class="num">−1</td></tr>
+    <tr><td>atom count</td><td class="num">12/15</td><td class="num">11/15</td><td class="num">−1</td></tr>
+    <tr><td>residue count</td><td class="num">10/15</td><td class="num">12/15</td><td class="num">+2</td></tr>
+    <tr><td><b>CA–CA distance</b></td><td class="num">3/15</td><td class="num"><b>11/15</b></td><td class="num"><b>+8</b></td></tr>
+    <tr><td><b>SASA</b></td><td class="num">6/15</td><td class="num"><b>11/15</b></td><td class="num"><b>+5</b></td></tr>
+    <tr><td><b>total</b></td><td class="num"><b>42/75</b></td><td class="num"><b>55/75</b></td><td class="num"><b>+13</b></td></tr>
+  </tbody>
+</table>
+
+<div class="card good">
+  <h3>Generalizes — and concentrated where the Tcl is hard <span class="tag up">+13 / 75</span></h3>
+  <p>
+    Injection helps across all five structures, and the gain lands exactly where the 1CRN study
+    predicted: the <em>syntax-error-prone</em> measures — <b>CA–CA distance (+8)</b> and <b>SASA (+5)</b>,
+    both bracket-heavy <code>measure</code> calls — while the single-command easy metrics (Rg, atom
+    count) are flat within noise. The same lesson, now on proteins up to 9,058 atoms: the cheatsheet
+    earns its keep on the hard idioms, not the trivial ones.
+  </p>
+</div>
+
+<div class="callout">
+  <b>Server-noise caveat.</b> Both arms carry transient "no answer" failures (timeouts/thrash on a
+  contended shared GPU — visible even on tiny 1CRN), which drag both totals down; whenever the agent
+  <em>does</em> answer it is exact to the decimal. So absolute scores understate true correctness, but
+  the inject-vs-none gap and the per-metric concentration are the robust signal. A dedicated GPU and
+  more seeds would lift both arms and sharpen the margin.
+</div>
+
+<h2>7 · Visualization correctness — the gap is on both halves</h2>
+<p>
+  Everything above scores <em>analysis</em> (numbers vs an oracle). Visualization is checkable the same
+  way — not by pixels or a vision judge, but by <b>scene-state assertions</b>: replay the agent's Tcl and
+  verify the representation it actually built (style / coloring / selection). It's the visual analog of
+  <code>scalar_within</code> — deterministic and implementation-agnostic.
+</p>
+<table>
+  <thead><tr><th>viz task (1CRN)</th><th>rubric</th><th class="num">none</th><th class="num">inject</th></tr></thead>
+  <tbody>
+    <tr><td>show protein as Licorice</td><td>yes</td><td class="num">FAIL</td><td class="num">PASS</td></tr>
+    <tr><td>color by Element</td><td>yes</td><td class="num">PASS</td><td class="num">PASS</td></tr>
+    <tr><td>color by Charge</td><td>yes</td><td class="num">PASS</td><td class="num">PASS</td></tr>
+    <tr><td>aromatic selection (PHE/TYR/TRP)</td><td>yes</td><td class="num">PASS</td><td class="num">PASS</td></tr>
+    <tr><td><b>scene-state total</b></td><td><b>4/4 "yes"</b></td><td class="num"><b>3/4</b></td><td class="num"><b>4/4</b></td></tr>
+  </tbody>
+</table>
+<div class="card bad">
+  <h3>A false "yes," caught <span class="tag down">baseline: licorice built nothing</span></h3>
+  <p>
+    On the Licorice task the baseline agent wrote "yes" — the text rubric passes — but scene-state shows it
+    built <em>zero representations</em> (the recurring <code>mol load cif</code> load failure, so nothing
+    rendered). Injection fixes it (a valid <code>mol new</code> load → the rep exists), 4/4. So the
+    completion-vs-correctness gap is not only in the numbers: the agent will claim a picture it never drew,
+    and only scene-state verification catches it.
+  </p>
+</div>
+<p class="note">
+  Aside: visualization is the agent's <em>stronger</em> half — representation Tcl (<code>mol
+  modstyle/modcolor/modselect</code>) is flat and simple, whereas its analysis failures were all
+  bracket-heavy <code>measure</code> calls. Single pass; the discriminating result is the Licorice false-yes.
+</p>
+
+<h2>8 · Making the agent correct — and what actually generalizes</h2>
+<p>
+  Three targeted fixes, from the failure analysis: (1) inject a curated VMD-Tcl cheatsheet up front;
+  (2) reject syntactically incomplete Tcl before it hangs the interpreter, and raise timeouts;
+  (3) expose semantic tools (<code>vmd_measure</code>, <code>vmd_represent</code>) that emit the correct
+  Tcl so the model only names the operation. Together they take Qwen from ~56% to <b>97% correctness
+  with the completion–correctness gap collapsing to 0</b> on the five-structure analysis suite — when it
+  answers, it is right.
+</p>
+<div class="callout">
+  <b>Rigor — is that generalization or tool coverage?</b> The semantic tools' operations are exactly the
+  suite's metrics, so 97% partly reflects "the tool does the task." We re-evaluated on <b>held-out
+  operations the tools do not cover</b> (hydrogen bonds, a 3-atom angle, a dihedral, centre-of-mass,
+  bounding-box extent, a GLY count), decomposing none / inject-only / +tools.
+</div>
+<table>
+  <thead><tr><th>held-out operation</th><th class="num">none</th><th class="num">inject only</th><th class="num">+ tools</th></tr></thead>
+  <tbody>
+    <tr><td>hydrogen bonds</td><td class="num">6/6</td><td class="num">6/6</td><td class="num">6/6</td></tr>
+    <tr><td>3-atom angle</td><td class="num">4/6</td><td class="num">6/6</td><td class="num">6/6</td></tr>
+    <tr><td>dihedral (φ)</td><td class="num">3/6</td><td class="num">6/6</td><td class="num">6/6</td></tr>
+    <tr><td>centre-of-mass</td><td class="num">6/6</td><td class="num">6/6</td><td class="num">6/6</td></tr>
+    <tr><td>bounding-box extent</td><td class="num">2/6</td><td class="num">0/6</td><td class="num">0/6</td></tr>
+    <tr><td>GLY count</td><td class="num">0/6</td><td class="num">0/6</td><td class="num">0/6</td></tr>
+    <tr><td><b>total</b></td><td class="num"><b>21/36</b></td><td class="num"><b>24/36</b></td><td class="num"><b>24/36</b></td></tr>
+  </tbody>
+</table>
+<div class="card good">
+  <h3>What generalizes, precisely</h3>
+  <p>
+    The 97% is largely <b>tool coverage</b>: strip the covering tools and correctness falls to <b>67%</b>
+    (24/36). The semantic tools add <em>nothing</em> off their coverage (inject-only = +tools, both 24/36).
+    The real generalization is from <b>injection</b> (21→24), and only on the idioms the cheatsheet teaches —
+    the 3-atom angle (4→6) and dihedral (3→6). Operations it never mentions are unaffected (hbonds,
+    centre-of-mass: solved regardless) or resist everything (GLY count: 0/6). And injection is not free: it
+    slightly <em>hurt</em> the bounding-box task (2→0) — an injected reference can distract on operations it
+    doesn't cover.
+  </p>
+</div>
+<p class="note">
+  Bottom line: semantic tools are a strong fix <em>when they cover the operation</em>; injection gives a
+  smaller, idiom-specific generalization; some operations stay hard regardless. The headline 97% is the
+  former, not a general capability jump.
+</p>
+
+<h2>9 · Methodology &amp; reproducibility</h2>
+<ul class="tight">
+  <li><b>Oracle gold</b> is regenerated by VMD on every scoring run; agent answers are parsed from their saved files and compared within per-metric tolerances.</li>
+  <li><b>Gold is cross-validated against two independent tools.</b> MDAnalysis and Biopython (both unrelated to VMD) recompute Rg, atom/residue counts and CA–CA distance across <b>all five structures</b> (Biopython reads the 1CRN mmCIF). <b>19 of 20 checks agree</b> — atom counts, residue counts and CA–CA distances exactly, Rg to &lt;0.07 Å (within mass-model drift). The single difference is the 1QMZ residue count (VMD 1124 vs 1122): VMD's <code>protein</code> macro includes 2 modified residues the other tools exclude — a definition choice, not an error.</li>
+  <li><b>Seeds.</b> Up to five repeats per arm; the per-case pass-rate exposes flaky cases (e.g. case 9). This mattered directly: a 3-seed run suggested RAG added +1.7, which five seeds overturned — small samples mislead on stochastic agents.</li>
+  <li><b>Result integrity.</b> Result JSONs are timestamped and append-only; every (arm, seed) and every sweep is namespaced, so no run overwrites another. Each sweep's scoreboard is archived.</li>
+  <li><b>Contacts</b> (case 10) is reported but excluded from the scored total: the “native contacts” definition is sensitive and must be pinned to the task's intended CA–CA form.</li>
+</ul>
+
+<h2>9 · Caveats &amp; next steps</h2>
+<ul class="tight">
+  <li><b>Statistical power:</b> 5 seeds, one structure (1CRN); spreads remain non-trivial. The injection win (3.6 → 4.4) is the most robust effect — broaden to more structures and 7–10 seeds to firm it up.</li>
+  <li><b>Enforce, don't request:</b> the agent ignores an optional <code>docs_search</code> tool even when explicitly ordered, yet uses the same knowledge correctly when it is injected. The productive direction is to <em>force</em> the knowledge in (always-inject, tool-choice forcing, or fine-tune on the correct idioms), not to improve the index.</li>
+  <li><b>Why the Wiki hurts</b> needs a transcript-level look (turn budget spent on <code>wiki_update</code> vs answering?), plus a <b>warm-start</b> run that lets it accumulate across sessions — the case the reset hid.</li>
+  <li><b>Clean cross-model baseline:</b> rerun Claude through the same correctness scorer to lock Finding 2.</li>
+</ul>
+
+<footer>
+  Generated for the vmd_ai project. Numbers are oracle-verified on VMD 1.9.4a57 (1CRN). “Completion” = task finished; “correctness” = computed value within tolerance of a VMD-computed reference. Companion: <code>docs/scivisagentbench_vs_vmdbench.md</code>.
+</footer>
+
+</div>
+</body>
+</html>

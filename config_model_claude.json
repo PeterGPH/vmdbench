@@ -1,0 +1,17 @@
+{
+  "_comment": "Baseline: Claude (Anthropic direct), RAW. Set ANTHROPIC_API_KEY in the env (api_key left blank); costs API. Update the model string as needed.",
+  "provider": "anthropic-direct",
+  "model": "claude-sonnet-4-5",
+  "api_key": "",
+  "agent_name": "vmd_ai",
+  "eval_mode": "mcp",
+  "experiment_number": "model_claude",
+  "enable_rag": false,
+  "enable_wiki": false,
+  "vmd_ai_runtime_path": "/Users/pinhaogu/Documents/GitHub/PyMolAI/vmd_ai/runtime",
+  "loop_timeout": 120,
+  "task_timeout": 360,
+  "vmd_backend": "subprocess",
+  "vmd_bin": "/Applications/VMD.app/Contents/vmd/vmd_MACOSXARM64",
+  "vmd_timeout": 45
+}

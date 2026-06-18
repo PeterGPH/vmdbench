@@ -1,0 +1,22 @@
+{
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-5",
+  "agent_name": "vmd_ai",
+  "eval_mode": "mcp",
+  "experiment_number": "exp1",
+  "vmd_ai_runtime_path": "/Users/pinhaogu/Documents/GitHub/PyMolAI/vmd_ai/runtime",
+  "loop_timeout": 120,
+  "task_timeout": 900,
+  "vmd_backend": "subprocess",
+  "vmd_bin": "/Applications/VMD.app/Contents/vmd/vmd_MACOSXARM64",
+  "vmd_timeout": 120,
+  "price": {
+    "input_per_1m_tokens": "$3.00",
+    "output_per_1m_tokens": "$15.00"
+  },
+  "rate_limits": {
+    "requests_per_minute": 50,
+    "input_tokens_per_minute": 30000,
+    "output_tokens_per_minute": 8000
+  }
+}

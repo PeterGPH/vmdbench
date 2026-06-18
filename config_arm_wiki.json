@@ -1,0 +1,20 @@
+{
+  "provider": "vllm",
+  "model": "Qwen/Qwen2.5-72B-Instruct-AWQ",
+  "base_url": "http://localhost:8000/v1",
+  "api_key": "sk-local-anything",
+  "agent_name": "vmd_ai",
+  "eval_mode": "mcp",
+  "experiment_number": "wiki",
+  "enable_rag": false,
+  "enable_wiki": true,
+  "wiki_root": "/Users/pinhaogu/.vmdai/bench_wiki/wiki",
+  "wiki_raw_root": "/Users/pinhaogu/.vmdai/raw",
+  "vmd_ai_runtime_path": "/Users/pinhaogu/Documents/GitHub/PyMolAI/vmd_ai/runtime",
+  "loop_timeout": 120,
+  "task_timeout": 360,
+  "vmd_backend": "subprocess",
+  "vmd_bin": "/Applications/VMD.app/Contents/vmd/vmd_MACOSXARM64",
+  "vmd_timeout": 45,
+  "price": { "input_per_1m_tokens": "$0.00", "output_per_1m_tokens": "$0.00" }
+}

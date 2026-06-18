@@ -1,0 +1,18 @@
+{
+  "_comment": "Baseline: GPT via OpenRouter, RAW. Set OPENROUTER_API_KEY in the env (api_key left blank); costs API. Swap the model string for any OpenRouter-served model (openai/gpt-4o, meta-llama/llama-3.1-70b-instruct, etc.).",
+  "provider": "openrouter",
+  "model": "openai/gpt-4o",
+  "base_url": "https://openrouter.ai/api/v1",
+  "api_key": "",
+  "agent_name": "vmd_ai",
+  "eval_mode": "mcp",
+  "experiment_number": "model_gpt",
+  "enable_rag": false,
+  "enable_wiki": false,
+  "vmd_ai_runtime_path": "/Users/pinhaogu/Documents/GitHub/PyMolAI/vmd_ai/runtime",
+  "loop_timeout": 120,
+  "task_timeout": 360,
+  "vmd_backend": "subprocess",
+  "vmd_bin": "/Applications/VMD.app/Contents/vmd/vmd_MACOSXARM64",
+  "vmd_timeout": 45
+}
